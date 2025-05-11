@@ -9,17 +9,17 @@ from firebase_admin import db
 from openai import OpenAI
 import logging
 
-# 配置日志记录
+# 配置日誌記錄
 logging.basicConfig(level=logging.INFO)
 
-# 使用环境变量读取凭证
+# 使用環境變量讀取憑證
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 token = os.getenv('LINE_BOT_TOKEN')
 secret = os.getenv('LINE_BOT_SECRET')
 firebase_url = os.getenv('FIREBASE_URL')
 asst_id = os.getenv('ASST_ID')
 
-# 初始化 Firebase Admin SDK，使用内建凭证
+# 初始化 Firebase Admin SDK，使用內建憑證
 firebase_admin.initialize_app(options={
     'databaseURL': firebase_url
 })
@@ -35,7 +35,7 @@ def linebot(request):
         line_bot_api = LineBotApi(token)
         handler = WebhookHandler(secret)
         
-        # 检查请求头中是否存在 'X-Line-Signature'
+        # 檢查請求Header 中是否存在 'X-Line-Signature'
         if 'X-Line-Signature' not in request.headers:
             logging.error("Missing X-Line-Signature header")
             return 'Missing X-Line-Signature header', 400
@@ -43,7 +43,7 @@ def linebot(request):
         signature = request.headers['X-Line-Signature']
         handler.handle(body, signature)
 
-        # 检查事件列表是否存在且非空
+        # 檢查事件列表是否存在且非空
         if 'events' not in json_data or not json_data['events']:
             logging.error("No events in request")
             return 'No events in request', 400
@@ -89,7 +89,7 @@ def linebot(request):
                 thread_ref.set(chat.id)
                 logging.info(f"Created new thread with ID: {chat.id}")
             else:
-                # 更新firebase中的对话记录
+                # 更新firebase中的對話記錄
                 timestamp = datetime.now(timezone(timedelta(hours=+8))).strftime("%Y-%m-%d %H:%M:%S %a")
                 db.reference(user_chat_path).child(timestamp).set({"role": "user", "content": msg})
                 logging.info(f"Saved user message to Firebase at {user_chat_path} with timestamp {timestamp}")
@@ -107,7 +107,7 @@ def linebot(request):
                 latest_message = messages[0]
                 ai_msg = latest_message.content[0].text.value
                 reply_msg = TextSendMessage(text=ai_msg)
-                # 更新firebase中的对话记录
+                # 更新firebase中的對話記錄
                 timestamp = datetime.now(timezone(timedelta(hours=+8))).strftime("%Y-%m-%d %H:%M:%S %a")
                 db.reference(user_chat_path).child(timestamp).set({"role": "assistant", "content": ai_msg})
                 logging.info(f"Saved assistant message to Firebase at {user_chat_path} with timestamp {timestamp}")
